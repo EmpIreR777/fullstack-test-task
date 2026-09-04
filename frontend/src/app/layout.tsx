@@ -1,28 +1,41 @@
 import type { Metadata } from "next";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { Container } from "react-bootstrap";
+import { Manrope, Unbounded, JetBrains_Mono } from "next/font/google";
+import './globals.css';
+import { QueryProvider } from '@/providers/QueryProvider';
+import { Header } from '@/components/layout/Header';
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: 'Тестовое задание Fullstack',
-    description: 'Тестовое задание Fullstack',
-  };
-}
+const manrope = Manrope({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-manrope',
+});
 
-export default async function RootLayout({
-  children
+const unbounded = Unbounded({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-unbounded',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-jetbrains',
+});
+
+export const metadata: Metadata = {
+  title: 'FileGuard — Управление файлами',
+  description: 'Загрузка, обработка и сканирование файлов',
+};
+
+export default function RootLayout({
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='ru'>
-      <head>
-        <link rel="icon" href="/public/favicon.ico" sizes="any" />
-      </head>
+    <html lang="ru" className={`${manrope.variable} ${unbounded.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <Container fluid className='p-0'>
-            {children}
-        </Container>
+        <QueryProvider>
+          <Header />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );

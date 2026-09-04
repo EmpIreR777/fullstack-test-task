@@ -1,38 +1,54 @@
+x-backend-common: &backend-common
+  image: backend:latest
+  env_file:
+    - .env.dev
+  volumes:
+    - ./backend:/backend
+  depends_on:
+    backend-db:
+      condition: service_healthy
+    backend-redis:
+      condition: service_healthy
+
 services:
   backend:
-    build: ./backend
-    command: uvicorn src.app:app --host 0.0.0.0 --reload --port 8000
+    <<: *backend-common
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: backend
-    volumes:
-      - ./backend:/backend
-    env_file: ".env.dev"
+    command: ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--reload", "--port", "8000"]
     ports:
       - "8000:8000"
-    depends_on:
-      - backend-db
 
   backend-worker:
-    build: ./backend
-    command: [ 'celery', '-A', 'src.tasks.celery_app', 'worker', '-l', 'info' ]
+    <<: *backend-common
     container_name: backend-worker
-    env_file: ".env.dev"
-    volumes:
-      - ./backend:/backend
-    depends_on:
-      - backend-db
+    entrypoint: []
+    command: ["celery", "-A", "src.celery.celery:celery_app", "worker", "-l", "info"]
 
   backend-db:
     image: postgres:latest
     container_name: backend-db
     ports:
-      - "5433:5433"
+      - "5432:5432"
     env_file: ".env.dev"
     volumes:
       - backend-db-volume:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend-redis:
     image: redis:latest
     container_name: backend-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   frontend:
     build:
